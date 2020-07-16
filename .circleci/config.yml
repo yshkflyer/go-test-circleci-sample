@@ -32,4 +32,31 @@ jobs:
           command: |
             echo "test failed"
             cat /tmp/test_result.txt
+            if [ -z "${SLACK_WEBHOOK}" ]; then
+              echo "NO SLACK WEBHOOK SET"
+              echo "Please input your SLACK_WEBHOOK value either in the settings for this project."
+              exit 1
+            else
+              qt='```'
+              err="${qt}$(cat /tmp/test_result.txt | sed 's/\"/\\\"/g')${qt}"
+              curl -X POST -H 'Content-type: application/json' \
+                --data \
+                "{ \
+                  \"attachments\": [ \
+                    { \
+                      \"text\": \"test failed\", \
+                      \"color\": \"#A30100\" \
+                    } \
+                  ], \
+                  \"blocks\": [ \
+                    { \
+                      \"type\": \"section\", \
+                      \"text\": { \
+                        \"type\": \"mrkdwn\", \
+                        \"text\": \"${err}\" \
+                      } \
+                    } \
+                  ] \
+                }" ${SLACK_WEBHOOK}
+            fi
           when: on_fail
